@@ -1,0 +1,21 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    width: 100vw;
+    height: 100vh;
+    background-color: #111;
+    display: flex;
+    flex-direction: row;
+    justify-content: end;
+}
+
+#cameo {
+    width: fit-content;
+    height: 100vh;
+    transform: scaleX(-1);
+    --webkit-transform: scaleX(-1);
+    --mox-transform: scaleX(-1);
+}
