@@ -1,0 +1,37 @@
+* {
+    margin: 0;
+    padding: 0;
+    color: #fff;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+a {
+    color: #50eaf3;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #2d8d92;
+}
+
+body {
+    width: 100vw;
+    height: 100vh;
+    background-color: #111;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+#info {
+    width: 20vw;
+    padding: 20px;
+    text-align: center;
+    p {
+        margin: 20px 0;
+    }
+}
+
+#model-container {
+    width: 80vw;
+}
