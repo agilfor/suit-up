@@ -6,6 +6,14 @@ let face_landmarker = null;
 let detection_id = null;
 let running = false;
 
+function generate_landmarks() {
+    const container = document.getElementById("landmark-container");
+    container.innerHTML = "";
+    for (var i = 0; i < 478; i++) {
+        container.innerHTML += `<span id="landmark-${i}" class="landmark"></span>`
+    }
+}
+
 function start_stream() {
     const video = document.getElementById(VIDEO_ELEMENT_ID);
     if (navigator.mediaDevices.getUserMedia && video instanceof HTMLVideoElement) {
@@ -20,6 +28,28 @@ function start_stream() {
             .catch((err) => {
                 console.error(`Error opening camera: ${err}`)
             })
+    }
+}
+
+function parse_landmarks(result) {
+    const video = document.getElementById(VIDEO_ELEMENT_ID);
+    if (!(video instanceof HTMLVideoElement)) return;
+    let landmark = null;
+    let rfl = null;
+    if (result.faceLandmarks.length > 0) {
+        for (var i = 0; i < result.faceLandmarks[0].length; i++) {
+            landmark = document.getElementById(`landmark-${i}`);
+            rfl = result.faceLandmarks[0][i];
+            let x = video.getBoundingClientRect().right - (rfl.x * video.offsetWidth);
+            let y = (rfl.y * video.offsetHeight) + video.getBoundingClientRect().top;
+            landmark.style.top = `${y}px`;
+            landmark.style.left = `${x}px`;
+        }
+    } else {
+        for (var i = 0; i < 478; i++) {
+            landmark = document.getElementById(`landmark-${i}`);
+            landmark.style.top = "-10px";
+        }
     }
 }
 
@@ -48,6 +78,7 @@ async function run_facial_landmarking() {
             const result = face_landmarker.detectForVideo(video, start_time);
             console.log(result);
             last_video_time = video.currentTime;
+            parse_landmarks(result);
         }
         detection_id = window.requestAnimationFrame(request_face_detection);
     };
@@ -80,11 +111,12 @@ function stop_all() {
         for (var i = 0; i < tracks.length; i++) tracks[i].stop();
         video.srcObject = null;
     }
-    
+    generate_landmarks();
     running = false;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    generate_landmarks();
     start_all();
     window.addEventListener("keyup", (ev) => {
         console.log(ev.code);
