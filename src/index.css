@@ -1,6 +1,17 @@
 * {
     margin: 0;
     padding: 0;
+    color: #fff;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+a {
+    color: #50eaf3;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #2d8d92;
 }
 
 body {
@@ -9,7 +20,7 @@ body {
     background-color: #111;
     display: flex;
     flex-direction: row;
-    justify-content: end;
+    justify-content: space-between;
 }
 
 #cameo {
@@ -30,4 +41,13 @@ body {
     border: #f00 solid 2px;
     border-radius: 50%;
     z-index: 100;
+}
+
+#info {
+    width: 20vw;
+    padding: 20px;
+    text-align: center;
+    p {
+        margin: 20px 0;
+    }
 }
