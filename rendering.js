@@ -1,8 +1,26 @@
 import * as THREE from 'three';
 import { STLLoader } from 'three/addons/stlloader';
 
-const loader = new STLLoader();
+const targetMatrix = new THREE.Matrix4();
+const targetPosition = new THREE.Vector3();
+const targetQuaternion = new THREE.Quaternion();
+const targetScale = new THREE.Vector3();
 
+function getAvatarQuaternion(mpMatrixArray) {
+    // Unpack 16-element array natively into standard WebGL projection fields
+    targetMatrix.fromArray(mpMatrixArray);
+    
+    // Decompose values cleanly into distinct transform vectors
+    targetMatrix.decompose(targetPosition, targetQuaternion, targetScale);
+    
+    // Coordinate inversion mapping to fix mirror issues across web environment spaces
+    targetQuaternion.y = -targetQuaternion.y; // Invert Yaw
+    targetQuaternion.z = -targetQuaternion.z; // Invert Roll
+    
+    return targetQuaternion;
+}
+
+const loader = new STLLoader();
 const scene = new THREE.Scene();
 scene.background = null;
 const geometry = await loader.loadAsync('./models/mask-v2.stl');
@@ -16,13 +34,13 @@ const mesh = new THREE.Mesh(geometry, material);
 mesh.position.set(0, 0, 0);
 mesh.rotation.x = -Math.PI / 2 + 0.2;
 scene.add(mesh);
-const ambient_light = new THREE.AmbientLight(0x0000ff, 0.2);
+const ambient_light = new THREE.AmbientLight(0xffffff, 0.6);
 scene.add(ambient_light);
-const dir_light = new THREE.DirectionalLight(0xff0000, 1);
-dir_light.position.set(50, 10, -5);
-scene.add(dir_light);
+// const dir_light = new THREE.DirectionalLight(0xffffff, 0.6);
+// dir_light.position.set(50, 10, -5);
+// scene.add(dir_light);
 
-const aspect = (window.innerWidth * 0.8) / window.innerHeight;
+const aspect = video.offsetWidth / video.offsetHeight;
 const camera = new THREE.PerspectiveCamera(
     50,
     aspect,
@@ -44,12 +62,8 @@ renderer.render(scene, camera);
 
 document.getElementById("model-container").appendChild(renderer.domElement);
 
-function animate() {
-    window.requestAnimationFrame(animate);
-
-    mesh.rotation.z += 0.01;
-    renderer.render(scene, camera);
-    console.log(camera.rotation.y);
+window.onresize = () => {
+    camera.aspect = video.offsetWidth / video.offsetHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(video.offsetWidth, video.offsetHeight);
 }
-
-animate()
