@@ -54,6 +54,7 @@ function start_stream() {
 
 function parse_landmarks(result) {
     const video = document.getElementById(VIDEO_ELEMENT_ID);
+    const video_bounding_rect = video.getBoundingClientRect();
     if (!(video instanceof HTMLVideoElement)) return;
     let landmark = null;
     let rfl = null;
@@ -61,15 +62,14 @@ function parse_landmarks(result) {
         for (var i = 0; i < result.faceLandmarks[0].length; i++) {
             landmark = document.getElementById(`landmark-${i}`);
             rfl = result.faceLandmarks[0][i];
-            let x = video.getBoundingClientRect().right - (rfl.x * video.offsetWidth);
-            let y = (rfl.y * video.offsetHeight) + video.getBoundingClientRect().top;
-            landmark.style.top = `${y}px`;
-            landmark.style.left = `${x}px`;
+            let x = video_bounding_rect.right - (rfl.x * video_bounding_rect.width);
+            let y = (rfl.y * video_bounding_rect.height) + video_bounding_rect.top;
+            landmark.style.transform = `translate3d(${x}px, ${y}px, 0)`;
         }
     } else {
         for (var i = 0; i < 478; i++) {
             landmark = document.getElementById(`landmark-${i}`);
-            landmark.style.top = "-10px";
+            landmark.style.transform = 'translate3d(0, -100px, 0)';
         }
     }
 }

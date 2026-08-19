@@ -43,7 +43,7 @@ body {
 .landmark {
     display: block;
     position: absolute;
-    top: -10px;
+    top: 0; left: 0;
     /* transition: all 0.1s linear; */
     /* width: 5px; */
     /* height: 5px; */
