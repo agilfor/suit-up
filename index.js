@@ -1,17 +1,14 @@
-import { FaceLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/vision_bundle.mjs"
+import { FaceLandmarker, FilesetResolver } from 'mediapipe';
 // Docs for MediaPipe at: https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/README.md
-
 import * as THREE from 'three';
 import { STLLoader } from 'three/addons/stlloader';
 
-
 // --- MediaPipe Globals ---
 const VIDEO_ELEMENT_ID = "cameo";
+let video;
 let face_landmarker = null;
 let detection_id = null;
 let running = false;
-let face_orientation = null;
-let latest_rotation;
 
 // --- THREE Globals ---
 const loader = new STLLoader();
@@ -27,16 +24,7 @@ scene.add(dir_light);
 let geometry, mesh, camera;
 
 // --- MediaPipe Functions ---
-function generate_landmarks() {
-    const container = document.getElementById("landmark-container");
-    container.innerHTML = "";
-    for (var i = 0; i < 478; i++) {
-        container.innerHTML += `<span id="landmark-${i}" class="landmark"></span>`
-    }
-}
-
 function start_stream() {
-    const video = document.getElementById(VIDEO_ELEMENT_ID);
     if (navigator.mediaDevices.getUserMedia && video instanceof HTMLVideoElement) {
         navigator.mediaDevices.getUserMedia({ video: true })
             .then((stream) => {
@@ -53,23 +41,15 @@ function start_stream() {
 }
 
 function parse_landmarks(result) {
-    const video = document.getElementById(VIDEO_ELEMENT_ID);
-    const video_bounding_rect = video.getBoundingClientRect();
-    if (!(video instanceof HTMLVideoElement)) return;
-    let landmark = null;
-    let rfl = null;
-    if (result.faceLandmarks.length > 0) {
-        for (var i = 0; i < result.faceLandmarks[0].length; i++) {
-            landmark = document.getElementById(`landmark-${i}`);
-            rfl = result.faceLandmarks[0][i];
-            let x = video_bounding_rect.right - (rfl.x * video_bounding_rect.width);
-            let y = (rfl.y * video_bounding_rect.height) + video_bounding_rect.top;
-            landmark.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-        }
-    } else {
-        for (var i = 0; i < 478; i++) {
-            landmark = document.getElementById(`landmark-${i}`);
-            landmark.style.transform = 'translate3d(0, -100px, 0)';
+    if (result.facialTransformationMatrixes && result.facialTransformationMatrixes.length > 0) {
+        const matrix_data = result.facialTransformationMatrixes[0].data;
+        const transform_matrix = new THREE.Matrix4().fromArray(matrix_data);
+        const euler_rotation = new THREE.Euler().setFromRotationMatrix(transform_matrix);
+        if (mesh && renderer && scene && camera) {
+            mesh.rotation.x = euler_rotation.x;
+            mesh.rotation.y = -euler_rotation.y;
+            mesh.rotation.z = -euler_rotation.z;
+            renderer.render(scene, camera);
         }
     }
 }
@@ -89,7 +69,6 @@ async function run_facial_landmarking() {
         outputFacialTransformationMatrixes: true,
     });
 
-    const video = document.getElementById(VIDEO_ELEMENT_ID);
     let last_video_time = -1;
     
     const request_face_detection = () => {
@@ -107,6 +86,7 @@ async function run_facial_landmarking() {
 
     video.addEventListener("loadeddata", () => {
         request_face_detection();
+        resize_canvas();
     });
 }
 
@@ -127,19 +107,18 @@ function stop_all() {
         face_landmarker = null;
     }
 
-    const video = document.getElementById(VIDEO_ELEMENT_ID);
     if (video && video instanceof HTMLVideoElement) {
         const tracks = video.srcObject.getTracks();
         for (var i = 0; i < tracks.length; i++) tracks[i].stop();
         video.srcObject = null;
     }
-    generate_landmarks();
+    // generate_landmarks();
     running = false;
 }
 
 // --- THREE Functions ---
 async function load_model() {
-    const video_size = document.getElementById(VIDEO_ELEMENT_ID).getBoundingClientRect();
+    const video_size = video.getBoundingClientRect();
     geometry = await loader.loadAsync('./models/mask-v2.stl');
     if (!geometry) {
         console.error("Could not load STL model");
@@ -149,10 +128,9 @@ async function load_model() {
     const bounding_box = geometry.boundingBox;
     const center = bounding_box.getCenter(new THREE.Vector3());
     geometry.translate(-center.x, -center.y, -center.z);
+    geometry.rotateX(-Math.PI / 2 + 0.2); // temporary offset, fix in CAD
     mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(0, 0, 0);
-    mesh.rotation.x = -Math.PI / 2;
-    mesh.rotation.x += 0.2; // temporary manual offset (fix later in CAD)
     scene.add(mesh);
     const aspect = video_size.width / video_size.height;
     camera = new THREE.PerspectiveCamera(
@@ -175,8 +153,18 @@ async function load_model() {
     document.getElementById("model-container").appendChild(renderer.domElement);
 }
 
+function resize_canvas() {
+    if (video instanceof HTMLVideoElement && camera instanceof THREE.PerspectiveCamera) {
+        camera.aspect = video.offsetWidth / video.offsetHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(video.offsetWidth, video.offsetHeight);
+    }
+}
+
+// --- Listeners ---
 document.addEventListener("DOMContentLoaded", () => {
-    generate_landmarks();
+    video = document.getElementById(VIDEO_ELEMENT_ID);
+    // generate_landmarks();
     start_all();
     load_model();
     window.addEventListener("keyup", (ev) => {
@@ -187,3 +175,5 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     })
 })
+
+window.onresize = resize_canvas;

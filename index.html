@@ -4,10 +4,11 @@
         <title>suit-up</title>
         <link rel="stylesheet" type="text/css" href="index.css">
         <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-        <script type="module" src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs" crossorigin="anonymous"></script>
+        <!-- <script type="module" src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs" crossorigin="anonymous"></script> -->
         <script type="importmap">
             {
               "imports": {
+                "mediapipe": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs",
                 "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
                 "three/addons/stlloader": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/loaders/STLLoader.js"
               }
@@ -15,7 +16,7 @@
         </script>
     </head>
     <body>
-        <div id="landmark-container"></div>
+        <!-- <div id="landmark-container"></div> -->
         <div id="info">
             <h1>suit-up</h1>
             <h3>Use your camera to become Iron Man!</h3>
@@ -28,6 +29,5 @@
         <video autoplay="true" id="cameo"></video>
         <div id="model-container"></div>
         <script type="module" src="./index.js"></script>
-        <!-- <script type="module" src="./rendering.js"></script> -->
     </body>
 </html>
