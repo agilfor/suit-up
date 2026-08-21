@@ -46,9 +46,23 @@ function parse_landmarks(result) {
         const transform_matrix = new THREE.Matrix4().fromArray(matrix_data);
         const euler_rotation = new THREE.Euler().setFromRotationMatrix(transform_matrix);
         if (mesh && renderer && scene && camera) {
+            // rotate mask
             mesh.rotation.x = euler_rotation.x;
             mesh.rotation.y = -euler_rotation.y;
             mesh.rotation.z = -euler_rotation.z;
+
+            // move mask
+            const nose = result.faceLandmarks[0][1];
+            const ndc_x = -(nose.x - 0.5) * 2;
+            const ndc_y = -(nose.y - 0.5) * 2;
+
+            const n_vect = new THREE.Vector3(ndc_x, ndc_y, 0.5);
+            n_vect.unproject(camera);
+            n_vect.sub(camera.position).normalize();
+            const n_dist = -camera.position.z / n_vect.z;
+            const target_pos = camera.position.clone().add(n_vect.multiplyScalar(n_dist));
+            mesh.position.set(target_pos.x, target_pos.y, 0);
+
             renderer.render(scene, camera);
         }
     }
@@ -85,8 +99,8 @@ async function run_facial_landmarking() {
     };
 
     video.addEventListener("loadeddata", () => {
-        request_face_detection();
         resize_canvas();
+        request_face_detection();
     });
 }
 
