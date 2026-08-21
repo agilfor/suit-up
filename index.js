@@ -23,6 +23,8 @@ dir_light.position.set(0, 10, 0);
 scene.add(dir_light);
 let geometry, mesh, camera;
 let base_scale = 4.0;
+let x_offset = 0;
+let y_offset = 30;
 
 // --- MediaPipe Functions ---
 function start_stream() {
@@ -62,7 +64,8 @@ function parse_landmarks(result) {
             n_vect.sub(camera.position).normalize();
             const n_dist = -camera.position.z / n_vect.z;
             const target_pos = camera.position.clone().add(n_vect.multiplyScalar(n_dist));
-            mesh.position.set(target_pos.x, target_pos.y, 0);
+            console.log(target_pos, x_offset, y_offset);
+            mesh.position.set(target_pos.x + parseFloat(x_offset), target_pos.y + parseFloat(y_offset), 0);
 
             // scale mask
             const left_cheek = result.faceLandmarks[0][234];
@@ -99,7 +102,6 @@ async function run_facial_landmarking() {
         if (video.currentTime !== last_video_time) {
             const start_time = performance.now();
             const result = face_landmarker.detectForVideo(video, start_time);
-            console.log(result);
             last_video_time = video.currentTime;
             parse_landmarks(result);
         }
@@ -166,13 +168,16 @@ async function load_model() {
     const max_dimension = Math.max(size.x, size.y, size.z);
     const fov = camera.fov * (Math.PI / 180);
     let camera_z = Math.abs(max_dimension / 2 / Math.tan(fov / 2)) * 1.5;
-    console.log(camera_z);
     camera.position.set(0, 0, camera_z);
     camera.lookAt(0, 0, 0);
     renderer.setSize(video_size.width, video_size.height);
-    console.log(video_size.width, video_size.height);
     renderer.render(scene, camera);
     document.getElementById("model-container").appendChild(renderer.domElement);
+
+    // display constants
+    document.getElementById("x-offset").value = x_offset;
+    document.getElementById("y-offset").value = y_offset;
+    document.getElementById("base-scale").value = base_scale;
 }
 
 function resize_canvas() {
@@ -190,12 +195,13 @@ document.addEventListener("DOMContentLoaded", () => {
     start_all();
     load_model();
     window.addEventListener("keyup", (ev) => {
-        console.log(ev.code);
         if (ev.code == "Space") {
             if (running) stop_all();
             else start_all();
         }
     })
+    window.onresize = resize_canvas;
+    document.getElementById("x-offset").addEventListener("change", () => { x_offset = document.getElementById("x-offset").value; })
+    document.getElementById("y-offset").addEventListener("change", () => { y_offset = document.getElementById("y-offset").value; })
+    document.getElementById("base-scale").addEventListener("change", () => { base_scale = document.getElementById("base-scale").value; })
 })
-
-window.onresize = resize_canvas;
