@@ -22,6 +22,7 @@ const dir_light = new THREE.DirectionalLight(0xffffff, 0.6);
 dir_light.position.set(0, 10, 0);
 scene.add(dir_light);
 let geometry, mesh, camera;
+let base_scale = 4.0;
 
 // --- MediaPipe Functions ---
 function start_stream() {
@@ -62,6 +63,13 @@ function parse_landmarks(result) {
             const n_dist = -camera.position.z / n_vect.z;
             const target_pos = camera.position.clone().add(n_vect.multiplyScalar(n_dist));
             mesh.position.set(target_pos.x, target_pos.y, 0);
+
+            // scale mask
+            const left_cheek = result.faceLandmarks[0][234];
+            const right_cheek = result.faceLandmarks[0][454];
+            const face_width = Math.abs(right_cheek.x - left_cheek.x);
+
+            mesh.scale.set(face_width * base_scale, face_width * base_scale, face_width * base_scale);
 
             renderer.render(scene, camera);
         }
